@@ -1,6 +1,7 @@
 Django>=3.2,<5.0          # Django version suitable for long-term support  
 djangorestframework>=3.12,<4.0  # Django REST Framework  
 drf-yasg>=1.20,<2.0       # API documentation  
+coverage
 
 # Optional: JWT authentication  
 djangorestframework-simplejwt>=4.7,<5.0  

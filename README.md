@@ -15,6 +15,7 @@ This project demonstrates how to configure a Django REST Framework application w
 - [Running the Application](#running-the-application)
 - [Testing the API](#testing-the-api)
 - [Running Tests](#running-tests)
+- [Measuring Test Coverage](#measuring-test-coverage)
 
 ## Project Setup
 
@@ -97,7 +98,7 @@ To test the authentication, you’ll need to create a user.
 
     ```python
     # settings.py
-    
+
     REST_FRAMEWORK = {
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -112,7 +113,7 @@ To test the authentication, you’ll need to create a user.
     ```python
     from django.urls import path
     from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-    
+
     urlpatterns = [
         path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
         path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -138,9 +139,9 @@ To test the authentication, you’ll need to create a user.
 
     ```python
     # auth_prefix.py
-    
+
     from django.utils.deprecation import MiddlewareMixin
-    
+
     class JWTAuthPrefixMiddleware(MiddlewareMixin):
         def __call__(self, request):
             auth_header = request.headers.get('Authorization', '')
@@ -171,7 +172,7 @@ To test the authentication, you’ll need to create a user.
     from drf_yasg.views import get_schema_view
     from drf_yasg import openapi
     from rest_framework import permissions
-    
+
     schema_view = get_schema_view(
         openapi.Info(
             title="Your API Title",
@@ -182,7 +183,7 @@ To test the authentication, you’ll need to create a user.
         public=True,
         permission_classes=(permissions.AllowAny,),
     )
-    
+
     urlpatterns += [
         path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
         path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
@@ -224,6 +225,7 @@ To test the authentication, you’ll need to create a user.
 2. **Authorize with JWT in Swagger**
 
     - Click "Authorize" in the Swagger UI and enter your token in the following format:
+      
       ```
       Bearer <your_jwt_token>
       ```
@@ -244,18 +246,18 @@ To ensure your Django application is functioning as expected, you can run unit t
    from django.test import TestCase
    from .models import DaySchedule
    from django.urls import reverse
-   
+
    class DayScheduleTests(TestCase):
-   
+
        def setUp(self):
            # Set up initial test data
            DaySchedule.objects.create(name="Test Schedule")
-   
+
        def test_schedule_creation(self):
            # Test that a schedule can be created correctly
            schedule = DaySchedule.objects.get(name="Test Schedule")
            self.assertEqual(schedule.name, "Test Schedule")
-   
+
        def test_schedule_list_view(self):
            # Test the list view for schedules
            response = self.client.get(reverse('day-schedule-list'))
@@ -276,3 +278,64 @@ To ensure your Django application is functioning as expected, you can run unit t
    - **PASS:** Tests have completed without errors, indicating expected functionality.
    - **FAIL:** A test's assertions were not met. Review which test failed and diagnose the issue.
    - **ERROR:** An unhandled exception occurred during a test. Check the stack trace for details and address the problem.
+
+## Measuring Test Coverage
+
+Measuring test coverage provides insight into the portions of your code executed while running tests, helping identify untested parts of your application.
+
+1. **Install Coverage.py**
+
+    Ensure `coverage.py` is installed in your virtual environment:
+
+    ```bash
+    pip install coverage
+    ```
+
+2. **Run Coverage with Tests**
+
+    Measure code coverage while running your tests:
+
+    ```bash
+    coverage run manage.py test schedule_app
+    ```
+
+3. **Generate Coverage Report**
+
+    Create a terminal summary of the test coverage:
+
+    ```bash
+    coverage report
+    ```
+
+    Example output:
+
+    ```
+    Name                                     Stmts   Miss  Cover
+    ------------------------------------------------------------
+    manage.py                                   11      2    82%
+    schedule_app/__init__.py                     0      0   100%
+    schedule_app/admin.py                        4      0   100%
+    schedule_app/apps.py                         4      0   100%
+    schedule_app/middleware/auth_prefix.py       7      1    86%
+    schedule_app/models.py                       9      0   100%
+    schedule_app/serializers.py                 27      0   100%
+    schedule_app/urls.py                         5      0   100%
+    schedule_app/views.py                       10      0   100%
+    schedule_project/__init__.py                 0      0   100%
+    schedule_project/settings.py                20      0   100%
+    schedule_project/urls.py                     9      0   100%
+    ------------------------------------------------------------
+    TOTAL                                      106      3    97%
+    ```
+
+4. **Generate HTML Coverage Report**
+
+    For a more detailed analysis, generate an HTML report to visually inspect coverage:
+
+    ```bash
+    coverage html
+    ```
+
+    Open the `htmlcov/index.html` file in a browser to explore which lines were covered in more detail.
+
+By incorporating these practices, you can ensure a robust testing and coverage strategy for your Django project.
