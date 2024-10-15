@@ -7,15 +7,16 @@ This project demonstrates how to configure a Django REST Framework application w
 - [Project Setup](#project-setup)
   - [Requirements](#requirements)
   - [Installation](#installation)
+- [Running the Application](#running-the-application)
+  - [Development Server](#development-server)
+  - [Using Docker](#using-docker)
+- [Testing](#testing)
+- [Measuring Test Coverage](#measuring-test-coverage)
 - [Database Setup](#database-setup)
 - [Creating a New User](#creating-a-new-user)
 - [JWT Authentication](#jwt-authentication)
 - [JWT Middleware](#jwt-middleware)
 - [Swagger UI Setup](#swagger-ui-setup)
-- [Running the Application](#running-the-application)
-- [Testing the API](#testing-the-api)
-- [Running Tests](#running-tests)
-- [Measuring Test Coverage](#measuring-test-coverage)
 
 ## Project Setup
 
@@ -31,311 +32,260 @@ This project demonstrates how to configure a Django REST Framework application w
 
 1. **Clone the Repository**
 
-    ```bash
-    git clone https://github.com/arreolala/django_schedule.git
-    cd django_schedule
-    ```
+   ```bash
+   git clone https://github.com/arreolala/django_schedule.git
+   cd django_schedule
+   ```
 
 2. **Create a Virtual Environment**
 
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
 
 3. **Install Dependencies**
 
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-## Database Setup
-
-1. **Configure Database Settings**
-
-    Update your `settings.py` with your database configuration. For example, to use SQLite (default):
-
-    ```python
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / "db.sqlite3",
-        }
-    }
-    ```
-
-2. **Run Migrations**
-
-    Set up the database schema by running:
-
-    ```bash
-    python manage.py migrate
-    ```
-
-## Creating a New User
-
-To test the authentication, you’ll need to create a user.
-
-1. **Create a Superuser**
-
-    Generate a superuser account for accessing the Django admin and performing tests:
-
-    ```bash
-    python manage.py createsuperuser
-    ```
-
-2. **Fill in the prompts** with your desired username, email, and password.
-
-## JWT Authentication
-
-1. **Install Simple JWT**
-
-    Ensure that `djangorestframework-simplejwt` is in your list of dependencies and installed.
-
-2. **Configure Authentication Classes**
-
-    Update your Django settings to use JWT authentication:
-
-    ```python
-    # settings.py
-
-    REST_FRAMEWORK = {
-        'DEFAULT_AUTHENTICATION_CLASSES': [
-            'rest_framework_simplejwt.authentication.JWTAuthentication',
-        ],
-    }
-    ```
-
-3. **Add Token Endpoints**
-
-    Define the token obtain and refresh endpoints in your `urls.py`:
-
-    ```python
-    from django.urls import path
-    from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-    urlpatterns = [
-        path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-        path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    ]
-    ```
-
-## JWT Middleware
-
-1. **Create Middleware**
-
-    Place the middleware at the project level if it affects multiple apps:
-
-    ```plaintext
-    schedule_app/
-    ├── middleware/
-    │   ├── __init__.py
-    │   └── auth_prefix.py
-    ```
-
-2. **Define Middleware Logic**
-
-    Implement middleware logic to handle the JWT header:
-
-    ```python
-    # auth_prefix.py
-
-    from django.utils.deprecation import MiddlewareMixin
-
-    class JWTAuthPrefixMiddleware(MiddlewareMixin):
-        def __call__(self, request):
-            auth_header = request.headers.get('Authorization', '')
-            if auth_header and not auth_header.startswith('Bearer '):
-                request.META['HTTP_AUTHORIZATION'] = f'Bearer {auth_header}'
-            return self.get_response(request)
-    ```
-
-3. **Add Middleware to Settings**
-
-    Register the middleware in `settings.py`:
-
-    ```python
-    MIDDLEWARE = [
-        #... other middleware ...
-        'schedule_app.middleware.auth_prefix.JWTAuthPrefixMiddleware',
-    ]
-    ```
-
-## Swagger UI Setup
-
-1. **Schema View Configuration**
-
-    Set up `drf-yasg` to serve your API documentation:
-
-    ```python
-    from django.urls import path
-    from drf_yasg.views import get_schema_view
-    from drf_yasg import openapi
-    from rest_framework import permissions
-
-    schema_view = get_schema_view(
-        openapi.Info(
-            title="Your API Title",
-            default_version='v1',
-            description="API Description",
-            license=openapi.License(name="BSD License"),
-        ),
-        public=True,
-        permission_classes=(permissions.AllowAny,),
-    )
-
-    urlpatterns += [
-        path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-        path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    ]
-    ```
-
-2. **Swagger Settings**
-
-    Add `SWAGGER_SETTINGS` in your `settings.py`:
-
-    ```python
-    SWAGGER_SETTINGS = {
-        "USE_SESSION_AUTH": False,
-        "SECURITY_DEFINITIONS": {
-            "api_key": {"type": "apiKey", "name": "Authorization", "in": "header"},
-        },
-        "REFETCH_SCHEMA_WITH_AUTH": True,
-    }
-    ```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Running the Application
 
-1. **Start the Django Server**
+### Development Server
 
-    ```bash
-    python manage.py runserver
-    ```
+1. **Run the Migrations**
 
-2. **Access Swagger UI**
-
-    Visit `http://127.0.0.1:8000/swagger/` to access and interact with the API documentation.
-
-## Testing the API
-
-1. **Obtain JWT Token**
-
-    - Access the `/api/token/` endpoint via Swagger or a tool like Postman to obtain a JWT by providing your username and password.
-
-2. **Authorize with JWT in Swagger**
-
-    - Click "Authorize" in the Swagger UI and enter your token in the following format:
-      
-      ```
-      Bearer <your_jwt_token>
-      ```
-
-    The middleware will ensure that the "Bearer " prefix is automatically handled if missing when using JWTs.
-
-## Running Tests
-
-To ensure your Django application is functioning as expected, you can run unit tests specifically designed to test features and functionalities within your `schedule_app`. Django's built-in test framework makes it easy to validate your code.
-
-1. **Create Test Cases**
-
-   Ensure you have written appropriate test cases in your `schedule_app`. Typically, test cases are placed in a `tests.py` file within the app directory or in a `tests` package with multiple files if the tests are extensive.
-
-   Example of a basic test case in `schedule_app/tests.py`:
-
-   ```python
-   from django.test import TestCase
-   from .models import DaySchedule
-   from django.urls import reverse
-
-   class DayScheduleTests(TestCase):
-
-       def setUp(self):
-           # Set up initial test data
-           DaySchedule.objects.create(name="Test Schedule")
-
-       def test_schedule_creation(self):
-           # Test that a schedule can be created correctly
-           schedule = DaySchedule.objects.get(name="Test Schedule")
-           self.assertEqual(schedule.name, "Test Schedule")
-
-       def test_schedule_list_view(self):
-           # Test the list view for schedules
-           response = self.client.get(reverse('day-schedule-list'))
-           self.assertEqual(response.status_code, 200)
-           self.assertContains(response, "Test Schedule")
+   ```bash
+   python manage.py migrate
    ```
 
-2. **Run the Tests**
+2. **Start the Server**
 
-   Use Django's test command to run tests in your `schedule_app`:
+   ```bash
+   python manage.py runserver
+   ```
+
+3. **Access Swagger UI**
+
+   Visit `http://127.0.0.1:8000/swagger/` to interact with the API documentation.
+
+### Using Docker
+
+1. **Build the Docker Image**
+
+   Ensure a `Dockerfile` exists in your project directory. Build the image using:
+
+   ```bash
+   docker build -t django_schedule .
+   ```
+
+2. **Run the Container**
+
+   ```bash
+   docker run -p 8000:8000 django_schedule
+   ```
+
+   - For detached mode, use: `docker run -d -p 8000:8000 django_schedule`
+
+3. **Using Docker Compose**
+
+   If you have a `docker-compose.yml`, start all services with:
+
+   ```bash
+   docker-compose up
+   ```
+
+   - Use `-d` flag for detached mode: `docker-compose up -d`
+
+4. **Stopping Services**
+
+   - Single container: `docker stop <container_id>`
+   - With Docker Compose: `docker-compose down`
+
+## Testing
+
+1. **Run Tests**
+
+   Execute all test cases with:
 
    ```bash
    python manage.py test schedule_app
    ```
 
-3. **Interpreting Test Results**
+2. **Interpreting Test Results**
 
-   - **PASS:** Tests have completed without errors, indicating expected functionality.
-   - **FAIL:** A test's assertions were not met. Review which test failed and diagnose the issue.
-   - **ERROR:** An unhandled exception occurred during a test. Check the stack trace for details and address the problem.
+   - **PASS:** Functions as expected.
+   - **FAIL:** Review errors and fix code.
+   - **ERROR:** Investigate and resolve unhandled exceptions.
 
 ## Measuring Test Coverage
 
-Measuring test coverage provides insight into the portions of your code executed while running tests, helping identify untested parts of your application.
-
 1. **Install Coverage.py**
 
-    Ensure `coverage.py` is installed in your virtual environment:
+   ```bash
+   pip install coverage
+   ```
 
-    ```bash
-    pip install coverage
-    ```
+2. **Run Coverage Analysis**
 
-2. **Run Coverage with Tests**
-
-    Measure code coverage while running your tests:
-
-    ```bash
-    coverage run manage.py test schedule_app
-    ```
+   ```bash
+   coverage run manage.py test schedule_app
+   ```
 
 3. **Generate Coverage Report**
 
-    Create a terminal summary of the test coverage:
+   View a report in the terminal:
 
-    ```bash
-    coverage report
-    ```
+   ```bash
+   coverage report
+   ```
 
-    Example output:
+4. **HTML Coverage Report**
 
-    ```
-    Name                                     Stmts   Miss  Cover
-    ------------------------------------------------------------
-    manage.py                                   11      2    82%
-    schedule_app/__init__.py                     0      0   100%
-    schedule_app/admin.py                        4      0   100%
-    schedule_app/apps.py                         4      0   100%
-    schedule_app/middleware/auth_prefix.py       7      1    86%
-    schedule_app/models.py                       9      0   100%
-    schedule_app/serializers.py                 27      0   100%
-    schedule_app/urls.py                         5      0   100%
-    schedule_app/views.py                       10      0   100%
-    schedule_project/__init__.py                 0      0   100%
-    schedule_project/settings.py                20      0   100%
-    schedule_project/urls.py                     9      0   100%
-    ------------------------------------------------------------
-    TOTAL                                      106      3    97%
-    ```
+   ```bash
+   coverage html
+   ```
 
-4. **Generate HTML Coverage Report**
+   Open `htmlcov/index.html` in a browser for detailed coverage analysis.
 
-    For a more detailed analysis, generate an HTML report to visually inspect coverage:
+## Database Setup
 
-    ```bash
-    coverage html
-    ```
+1. **Configure Database Settings**
 
-    Open the `htmlcov/index.html` file in a browser to explore which lines were covered in more detail.
+   Examples for SQLite (default):
 
-By incorporating these practices, you can ensure a robust testing and coverage strategy for your Django project.
+   ```python
+   DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.sqlite3',
+           'NAME': BASE_DIR / "db.sqlite3",
+       }
+   }
+   ```
+
+2. **Run Migrations**
+
+   Set up schema:
+
+   ```bash
+   python manage.py migrate
+   ```
+
+## Creating a New User
+
+1. **Create a Superuser**
+
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+2. **Follow Prompts**: Provide username, email, and password.
+
+## JWT Authentication
+
+1. **Install Simple JWT**
+
+   Ensure `djangorestframework-simplejwt` is in your dependencies.
+
+2. **Configure Authentication**
+
+   In `settings.py`:
+
+   ```python
+   REST_FRAMEWORK = {
+       'DEFAULT_AUTHENTICATION_CLASSES': [
+           'rest_framework_simplejwt.authentication.JWTAuthentication',
+       ],
+   }
+   ```
+
+3. **Add Token API Endpoints**
+
+   In `urls.py`:
+
+   ```python
+   from django.urls import path
+   from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+   urlpatterns = [
+       path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+       path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+   ]
+   ```
+
+## JWT Middleware
+
+1. **Create Middleware**
+
+   Example structure:
+
+   ```plaintext
+   schedule_app/
+   ├── middleware/
+   │   ├── __init__.py
+   │   └── auth_prefix.py
+   ```
+
+2. **Middleware Logic**
+
+   ```python
+   from django.utils.deprecation import MiddlewareMixin
+
+   class JWTAuthPrefixMiddleware(MiddlewareMixin):
+       def __call__(self, request):
+           auth_header = request.headers.get('Authorization', '')
+           if auth_header and not auth_header.startswith('Bearer '):
+               request.META['HTTP_AUTHORIZATION'] = f'Bearer {auth_header}'
+           return self.get_response(request)
+   ```
+
+3. **Add Middleware to Settings**
+
+   ```python
+   MIDDLEWARE = [
+       #... other middleware ...
+       'schedule_app.middleware.auth_prefix.JWTAuthPrefixMiddleware',
+   ]
+   ```
+
+## Swagger UI Setup
+
+1. **Configure Schema View**
+
+   In `urls.py`:
+
+   ```python
+   from django.urls import path
+   from drf_yasg.views import get_schema_view
+   from drf_yasg import openapi
+   from rest_framework import permissions
+
+   schema_view = get_schema_view(
+       openapi.Info(
+           title="Your API Title",
+           default_version='v1',
+           description="API Description",
+           license=openapi.License(name="BSD License"),
+       ),
+       public=True,
+       permission_classes=(permissions.AllowAny,),
+   )
+
+   urlpatterns += [
+       path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+       path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   ]
+   ```
+
+2. **Swagger Settings**
+
+   ```python
+   SWAGGER_SETTINGS = {
+       "USE_SESSION_AUTH": False,
+       "SECURITY_DEFINITIONS": {
+           "api_key": {"type": "apiKey", "name": "Authorization", "in": "header"},
+       },
+       "REFETCH_SCHEMA_WITH_AUTH": True,
+   }
+   ```
