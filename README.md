@@ -31,8 +31,8 @@ This project demonstrates how to configure a Django REST Framework application w
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/yourusername/your-repo.git
-    cd your-repo
+    git clone https://github.com/arreolala/django_schedule.git
+    cd django_schedule
     ```
 
 2. **Create a Virtual Environment**
@@ -177,7 +177,6 @@ To test the authentication, you’ll need to create a user.
             title="Your API Title",
             default_version='v1',
             description="API Description",
-            contact=openapi.Contact(email="contact@example.com"),
             license=openapi.License(name="BSD License"),
         ),
         public=True,
